@@ -1,7 +1,7 @@
 {
-  "name": "node-js-getting-started",
+  "name": "fefu-cluster-interface",
   "version": "0.2.5",
-  "description": "A sample Node.js app using Express 4",
+  "description": "My homework for cloud-computing",
   "engines": {
     "node": "5.9.1"
   },
@@ -12,10 +12,6 @@
   "dependencies": {
     "ejs": "2.4.1",
     "express": "4.13.3"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/heroku/node-js-getting-started"
   },
   "keywords": [
     "node",

@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node index.js",
     "build": "webpack --progress --colors",
+    "heroku-postbuild" : "webpack --progress --colors",
     "wds" : "webpack-dev-server --progress --inline --hot --output-public-path \"http://localhost:8080/\""
   },
   "dependencies": {

@@ -74,7 +74,7 @@
 	        return _super.apply(this, arguments) || this;
 	    }
 	    App.prototype.render = function () {
-	        return React.createElement("div", null, "WTF");
+	        return React.createElement("div", null, "\u042D\u0439 \u043F\u0440\u0438\u0432\u0435\u0442");
 	    };
 	    return App;
 	}(React.Component));

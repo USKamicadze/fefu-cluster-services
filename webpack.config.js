@@ -30,6 +30,7 @@ var frontendConfig = {
   }
 };
 
+var nodeExternals = require('webpack-node-externals');
 var backendConfig = {
   target: 'node',
   node: {
@@ -64,9 +65,7 @@ var backendConfig = {
       { test: /\.js$/, loader: "source-map-loader" }
     ] : undefined
   },
-  externals: {
-    'express': 'commonjs express',
-  },
+  externals: [nodeExternals()],
 };
 
 module.exports = [frontendConfig, backendConfig];

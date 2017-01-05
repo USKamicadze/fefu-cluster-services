@@ -50,6 +50,12 @@
 	console.log(__dirname);
 	app.set('port', (process.env.PORT || 5000));
 	app.use(express.static(__dirname + '/public'));
+	app.get('/', function (request, response) {
+	    var scriptTag = process.env.NODE_ENV == 'development' ?
+	        "<script src=\"http://localhost:8080/bundle.js\"></script>" :
+	        "<script src=\"./public/bundle.js\"></script>";
+	    response.end("<!DOCTYPE html>\n      <html lang=\"en\">\n      <head>\n          <meta charset=\"UTF-8\">\n          <title>Fefu-cluster</title>\n      </head>\n      <body>\n          <div id=\"app-root\"></div>\n          " + scriptTag + "\n      </body>\n    </html>");
+	});
 	// views is directory for all template files
 	//app.set('views', __dirname + '/views');
 	//app.set('view engine', 'ejs');

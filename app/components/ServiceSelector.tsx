@@ -12,7 +12,7 @@ class ServiceSelector extends React.Component<IServiceSelectorProps, IServiceSel
         return <div>
             <div>ServiceSelector!</div>
             <ul>
-                {services.map((s) => <li><Link key={s.name} to={`${Routes.services}/${s.name}`}>s.name</Link></li>)}
+                {services.map((s) => <li><Link key={s.name} to={`${Routes.services}/${s.name}`}>{s.name}</Link></li>)}
             </ul>
         </div>;
     }

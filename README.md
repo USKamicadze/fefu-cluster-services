@@ -5,8 +5,10 @@ Make sure you have [Node.js](http://nodejs.org/) and the [Heroku Toolbelt](https
 ```sh
 $ git clone $repoURL # or clone your own fork
 $ cd $repoNAME
+$ echo -e "CLUSTER_HOST=cluster.host.ru\nCLUSTER_PORT=22" | cat > .env #or add this vars in your enviroment
 $ npm install
-$ npm start # or heroku local
+$ npm run wds & # webpack-dev-server
+$ heroku local # or npm start
 ```
 
 Your app should now be running on [localhost:5000](http://localhost:5000/).

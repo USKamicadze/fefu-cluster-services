@@ -3,18 +3,19 @@ import * as express from 'express';
 import {Server as WebSocketServer} from 'ws';
 import clusterServices from './common/services';
 import fallback from 'express-history-spa-fallback';
+import * as path from 'path';
 var app = express();
 console.log(__dirname);
 
 app.set('port', (process.env.PORT || 5000));
 
-app.use(express.static(__dirname + '/public'));
+app.use(express.static(path.resolve(__dirname, 'public')));
 app.use(fallback(function (request:any, response:any) {
   const scriptTag = process.env.NODE_ENV == 'development' ? 
     `<script src="http://localhost:8080/bundle.js"></script>` :
-    `<script src="./bundle.js"></script>`;
-  const enableDevTools = process.env.NODE_ENV == 'development' ? 
-    `<script>var $DevelopmentMode = true;</script>` : undefined;
+    `<script src="/bundle.js"></script>`;
+  const enableDevTools = 
+    `<script>var $DevelopmentMode = ${process.env.NODE_ENV == 'development'};</script>`;
   response.end(
     `<!DOCTYPE html>
       <html lang="en">

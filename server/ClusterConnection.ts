@@ -10,6 +10,7 @@ import {
 } from '../common/Messages';
 import * as WS from 'ws';
 import {Client as SSHClient, ClientChannel, ConnectConfig} from 'ssh2';
+import * as fs from 'fs';
 
 
 interface SSHConfig {
@@ -167,6 +168,52 @@ export class ClusterConnection {
                     stderr += data;
                     //console.log('STDERR: ' + data);
                 });
+            });
+        });
+    }
+
+    writeToFile(data: string, file: string) {
+        return new Promise((resolve, reject) => {
+            this.ssh.sftp((err, sftp) => {
+                if (err) {
+                    console.log("Error, problem starting SFTP: %s", err);
+                    reject(err);
+                    return;
+                }
+                console.log("SFTP started");
+
+                const writeStream = sftp.createWriteStream(file);
+                writeStream.on('close', () => {
+                    console.log(`file transfered to ${file}`);
+                    sftp.end();
+                    resolve();
+                });
+
+                writeStream.write(data);
+                writeStream.end();
+            });
+        });
+    }
+
+    uploadFile(source: string, dist: string) {
+        return new Promise((resolve, reject) => {
+            this.ssh.sftp((err, sftp) => {
+                if (err) {
+                    console.log("Error, problem starting SFTP: %s", err);
+                    reject(err);
+                    return;
+                }
+                console.log("SFTP started");
+
+                const readStream = fs.createReadStream(source);
+                const writeStream = sftp.createWriteStream(dist);
+                writeStream.on('close', () => {
+                    console.log(`file ${source} transfered to ${dist}`);
+                    sftp.end();
+                    resolve();
+                });
+
+                readStream.pipe( writeStream );
             });
         });
     }

@@ -1,5 +1,6 @@
 export interface ServiceState {
-
+    status: string;
+    data: any;
 }
 
 export enum AccountStatus {

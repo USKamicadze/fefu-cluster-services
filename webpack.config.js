@@ -34,8 +34,8 @@ var nodeExternals = require('webpack-node-externals');
 var backendConfig = {
   target: 'node',
   node: {
-    __dirname: false,
-    __filename: false,
+    __dirname: true,
+    __filename: true,
   },
   entry: './index.ts',
   output: {

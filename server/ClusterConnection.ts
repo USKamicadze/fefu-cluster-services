@@ -45,59 +45,68 @@ export class ClusterConnection {
     }
 
     async handleMessage(message: WebSocketMessage){
-        switch (message.type) {
-            case WebSocketMessageType.Connect:
-                const connectMessage = message as WebSocketMessageConnect;
-                const host = process.env.CLUSTER_HOST;
-                const port = process.env.CLUSTER_PORT;
-                const err = await this.connect({
-                    host: host,
-                    port: port,
-                    username : connectMessage.user,
-                    password : connectMessage.password
-                });
-                if (err) {
-                    const response : WebSocketMessageError = {
-                        type:WebSocketMessageType.Connect,
-                        status: WebSocketMessageStatus.ErrorResponse,
-                        data: err
-                    };
-                    this.sendWSMessage(response);
-                } else {
-                    const response : WebSocketMessageConnect = {
-                        user: connectMessage.user,
-                        password: undefined,
-                        status: WebSocketMessageStatus.SuccessResponse,
-                        type: WebSocketMessageType.Connect
-                    };
-                    this.sendWSMessage(response);
-                }
-                break;
-            case WebSocketMessageType.Disconnect:
-                this.ssh.end();
-                break;
-            case WebSocketMessageType.CallService:
-                const callServiceMessage = message as WebSocketMessageCallService;
-                const service = this.services[callServiceMessage.service];
-                service.call(this, callServiceMessage);
-                break;
-            case WebSocketMessageType.Custom:
-                if (process.env.NODE_ENV == 'development') {
-                    const customMessage = message as WebSocketMessageCustom;
-                    const result = await this.executeSSHCommand(customMessage.command);
-                    const response : WebSocketMessageResponse = {
-                        type:WebSocketMessageType.Custom,
-                        status: WebSocketMessageStatus.SuccessResponse,
-                        output: result.out,
-                        error: result.err
-                    };
-                    this.sendWSMessage(response);
+        try {
+            switch (message.type) {
+                case WebSocketMessageType.Connect:
+                    const connectMessage = message as WebSocketMessageConnect;
+                    const host = process.env.CLUSTER_HOST;
+                    const port = process.env.CLUSTER_PORT;
+                    const err = await this.connect({
+                        host: host,
+                        port: port,
+                        username : connectMessage.user,
+                        password : connectMessage.password
+                    });
+                    if (err) {
+                        const response : WebSocketMessageError = {
+                            type:WebSocketMessageType.Connect,
+                            status: WebSocketMessageStatus.ErrorResponse,
+                            data: err
+                        };
+                        this.sendWSMessage(response);
+                    } else {
+                        const response : WebSocketMessageConnect = {
+                            user: connectMessage.user,
+                            password: undefined,
+                            status: WebSocketMessageStatus.SuccessResponse,
+                            type: WebSocketMessageType.Connect
+                        };
+                        this.sendWSMessage(response);
+                    }
                     break;
-                }
-            
-            default:
-                console.log("WSMHandler: unknown message type");
-                break;
+                case WebSocketMessageType.Disconnect:
+                    this.ssh.end();
+                    break;
+                case WebSocketMessageType.CallService:
+                    const callServiceMessage = message as WebSocketMessageCallService;
+                    const service = this.services[callServiceMessage.service];
+                    service.call(this, callServiceMessage);
+                    break;
+                case WebSocketMessageType.Custom:
+                    if (process.env.NODE_ENV == 'development') {
+                        const customMessage = message as WebSocketMessageCustom;
+                        const result = await this.executeSSHCommand(customMessage.command);
+                        const response : WebSocketMessageResponse = {
+                            type:WebSocketMessageType.Custom,
+                            status: WebSocketMessageStatus.SuccessResponse,
+                            output: result.out,
+                            error: result.err
+                        };
+                        this.sendWSMessage(response);
+                        break;
+                    }
+                
+                default:
+                    console.log("WSMHandler: unknown message type");
+                    break;
+            }
+        } catch (e){
+            const response :WebSocketMessageError = {
+                type: message.type,
+                status: WebSocketMessageStatus.ErrorResponse,
+                data: e
+            };
+            this.sendWSMessage(response);
         }
     }
 

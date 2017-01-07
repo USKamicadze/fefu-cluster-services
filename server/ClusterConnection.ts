@@ -1,30 +1,16 @@
+import {
+    WebSocketMessage,
+    WebSocketMessageConnect,
+    WebSocketMessageCustom,
+    WebSocketMessageError,
+    WebSocketMessageResponse,
+    WebSocketMessageStatus,
+    WebSocketMessageType,
+    WebSocketMessageCallService
+} from '../common/Messages';
 import * as WS from 'ws';
 import {Client as SSHClient, ClientChannel, ConnectConfig} from 'ssh2';
 
-enum WebSocketMessageType {
-    Connect,
-    Custom,
-    Error,
-    Response
-};
-
-interface WebSocketMessage {
-    type: WebSocketMessageType;
-}
-
-interface WebSocketMessageConnect extends WebSocketMessage {
-    user: string;
-    password: string;
-}
-
-interface WebSocketMessageCustom extends WebSocketMessage {
-    command: string
-}
-
-interface WebSocketMessageResponse extends WebSocketMessage {
-    output: string;
-    error: string;
-}
 
 interface SSHConfig {
     host: string;
@@ -42,9 +28,11 @@ interface SSHConfig {
 export class ClusterConnection {
     private websocket: WS;
     private ssh: SSHClient;
+    private services: any;
 
-    constructor(ws: WS) {
+    constructor(ws: WS, services: any) {
         this.websocket = ws;
+        this.services = services;
         ws.on('message', (message) => {
             const wsm = JSON.parse(message) as WebSocketMessage;
             this.handleMessage(wsm);
@@ -69,29 +57,44 @@ export class ClusterConnection {
                     password : connectMessage.password
                 });
                 if (err) {
-                    const response = {
-                        type:WebSocketMessageType.Response,
-                        error: err
-                    } as WebSocketMessageResponse;
+                    const response : WebSocketMessageError = {
+                        type:WebSocketMessageType.Connect,
+                        status: WebSocketMessageStatus.ErrorResponse,
+                        data: err
+                    };
                     this.sendWSMessage(response);
-                } else if (process.env.NODE_ENV == 'development') {
-                    console.log(await this.executeSSHCommand('echo "anybody here?"'));
-                    console.log(await this.executeSSHCommand('ls -la'));
-                    console.log(await this.executeSSHCommand('echo "its working!!!"'));
+                } else {
+                    const response : WebSocketMessageConnect = {
+                        user: connectMessage.user,
+                        password: undefined,
+                        status: WebSocketMessageStatus.SuccessResponse,
+                        type: WebSocketMessageType.Connect
+                    };
+                    this.sendWSMessage(response);
                 }
+                break;
+            case WebSocketMessageType.Disconnect:
+                this.ssh.end();
+                break;
+            case WebSocketMessageType.CallService:
+                const callServiceMessage = message as WebSocketMessageCallService;
+                const service = this.services[callServiceMessage.service];
+                service.call(this, callServiceMessage);
                 break;
             case WebSocketMessageType.Custom:
                 if (process.env.NODE_ENV == 'development') {
                     const customMessage = message as WebSocketMessageCustom;
                     const result = await this.executeSSHCommand(customMessage.command);
-                    const response = {
-                        type:WebSocketMessageType.Response,
+                    const response : WebSocketMessageResponse = {
+                        type:WebSocketMessageType.Custom,
+                        status: WebSocketMessageStatus.SuccessResponse,
                         output: result.out,
                         error: result.err
-                    } as WebSocketMessageResponse;
+                    };
                     this.sendWSMessage(response);
                     break;
                 }
+            
             default:
                 console.log("WSMHandler: unknown message type");
                 break;
@@ -111,6 +114,16 @@ export class ClusterConnection {
                 this.ssh = ssh;
                 console.log("SHHClient ready!");
                 resolve();
+            });
+            ssh.on("end", () => {
+                console.log("ssh connection ended");
+                if (this.websocket.readyState == this.websocket.OPEN) {
+                    const message: WebSocketMessage = {
+                        type: WebSocketMessageType.Disconnect,
+                        status: WebSocketMessageStatus.SuccessResponse
+                    };
+                    this.sendWSMessage(message);
+                }
             });
             ssh.connect(config);
         });
@@ -153,9 +166,13 @@ export class ClusterConnection {
         const data = JSON.stringify(message);
         console.log(`sending through ws: ${data}`);
         this.websocket.send(data, (err) => {
-            console.log(`error during sending websocked message to browser: ${data}`);
+            if (err) {
+                console.log(`error during sending websocked message to browser: ${data}`);
+                console.log(err);
+            }
         });
     }
+
     end() {
         this.websocket.close();
     }

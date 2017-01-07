@@ -11,7 +11,11 @@
             "program": "${workspaceRoot}\\index.ts",
            // "cwd": "${workspaceRoot}",
             "outFiles": [],
-            "sourceMaps": true
+            "sourceMaps": true,
+            "env": {
+                "CLUSTER_HOST" : "cluster.dvfu.ru",
+                "CLUSTER_PORT" : 22
+            }
         },
         {
             "type": "node",

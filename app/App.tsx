@@ -1,3 +1,4 @@
+import { State } from './state';
 import * as React from 'react';
 import {Provider} from 'react-redux';
 import {Router, Route, IndexRoute, browserHistory, RouterState, RedirectFunction} from 'react-router';
@@ -30,9 +31,10 @@ import {callService} from './actions/services';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 function prepareComponent(name: string, Component: any) {
-	return connect<any, any, any>((state: any, ownProps: any) => {
+	return connect<any, any, any>((state: State, ownProps: any) => {
 		return {
-			serviceName: name
+			serviceName: name,
+			service: state.app.services[name]
 		}
 
 	},
